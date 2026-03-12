@@ -435,16 +435,9 @@ tbody tr:hover td { background: var(--primary-light); }
 }
 
 /* ── Mobile Overflow Fix ────────────────────────────────────── */
-* { max-width: 100%; }
-img, video, iframe, canvas { max-width: 100%; }
-.search-box { width: 100% !important; max-width: 280px; }
-.search-box input { width: 100%; }
-.card-header { flex-wrap: wrap; gap: 8px; }
-.td-actions { flex-wrap: wrap; }
 @media (max-width: 768px) {
-  .search-box { max-width: 100%; }
-  .topbar-right { gap: 6px; }
-  .topbar-right .btn { display: none; }
-  .content-header { gap: 8px; }
+  .search-box { width: 100% !important; }
+  .card-header { flex-wrap: wrap; }
   .content-header .btn { width: 100%; justify-content: center; }
+  .td-actions { flex-wrap: wrap; }
 }
