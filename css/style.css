@@ -40,7 +40,6 @@
 /* ── Reset ─────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-html, body { overflow-x: hidden; }
 body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; touch-action: pan-x pan-y; }
 a { text-decoration: none; color: inherit; }
 img { max-width: 100%; display: block; }
@@ -432,12 +431,4 @@ tbody tr:hover td { background: var(--primary-light); }
   body { background: #fff; }
   .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
   .stats-grid { grid-template-columns: repeat(4,1fr); }
-}
-
-/* ── Mobile Overflow Fix ────────────────────────────────────── */
-@media (max-width: 768px) {
-  .search-box { width: 100% !important; }
-  .card-header { flex-wrap: wrap; }
-  .content-header .btn { width: 100%; justify-content: center; }
-  .td-actions { flex-wrap: wrap; }
 }
