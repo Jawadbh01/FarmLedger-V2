@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FarmLedger — Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1a5c1e"/>
+  <link rel="manifest" href="../manifest.json"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🌾</div>
+      <div class="sidebar-logo-text">
+        <div class="sidebar-logo-name">FarmLedger</div>
+        <div class="sidebar-logo-sub">Admin Control Panel</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+      <div>
+        <div class="sidebar-user-name" id="sidebarName">Admin</div>
+        <div class="sidebar-user-role"><span class="badge badge-blue" style="font-size:10px">⚙️ System Admin</span></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Dashboard</div>
+      <button class="nav-item active" data-tab="overview"><span class="nav-icon">📊</span> Overview</button>
+      <div class="nav-section-title">User Management</div>
+      <button class="nav-item" data-tab="landlords"><span class="nav-icon">👑</span> Landlords</button>
+      <button class="nav-item" data-tab="managers"><span class="nav-icon">👨‍💼</span> Managers</button>
+      <button class="nav-item" data-tab="allusers"><span class="nav-icon">👥</span> All Users</button>
+      <div class="nav-section-title">System</div>
+      <button class="nav-item" data-tab="logs"><span class="nav-icon">📋</span> Activity Logs</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="offline-banner" id="offlineBanner">📵 Offline Mode — Data will sync automatically</div>
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div class="page-breadcrumb">Admin / <strong id="pageBreadcrumb">Overview</strong></div>
+      </div>
+      <div class="topbar-right">
+        <div class="online-indicator online" id="onlineIndicator"><div class="online-dot"></div>Online</div>
+        <button class="btn btn-sm btn-primary" onclick="openModal('createLandlordModal')">➕ New Landlord</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div id="pageLoader" class="page-loader"><div class="spinner"></div><div class="loader-text">Loading Admin Panel...</div></div>
+      <div id="appContent" class="hidden">
+
+        <!-- OVERVIEW -->
+        <div data-tab-content="overview">
+          <div class="content-header">
+            <div><div class="content-title">📊 System Overview</div><div class="content-subtitle">Full platform control — تمام نظام</div></div>
+            <button class="btn btn-primary" onclick="openModal('createLandlordModal')">➕ Create Landlord</button>
+          </div>
+          <div class="stats-grid" id="adminStats"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><span class="icon">👑</span> Landlords</div><button class="btn btn-sm btn-outline" onclick="switchTab('landlords')">Manage →</button></div>
+              <div class="table-wrap">
+                <table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="overviewLandlords"></tbody></table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><span class="icon">📈</span> Platform Stats</div></div>
+              <div id="platformStats"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LANDLORDS -->
+        <div data-tab-content="landlords" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">👑 Landlords — زمیندار</div><div class="content-subtitle">Create, manage and control landlord accounts</div></div>
+            <button class="btn btn-primary" onclick="openModal('createLandlordModal')">➕ Add Landlord</button>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="search-box" style="width:260px"><input class="form-input" id="llSearch" placeholder="🔍 Search landlords..." oninput="filterLandlords(this.value)"/></div>
+              <div class="flex-gap">
+                <span class="badge badge-gold" id="llCount">0 landlords</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Managers</th><th>Status</th><th></th></tr></thead>
+                <tbody id="landlordsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGERS -->
+        <div data-tab-content="managers" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">👨‍💼 Managers — منیجر</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="search-box" style="width:260px"><input class="form-input" id="mgSearch" placeholder="🔍 Search managers..." oninput="filterManagers(this.value)"/></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Landlord</th><th>Status</th><th></th></tr></thead>
+                <tbody id="managersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALL USERS -->
+        <div data-tab-content="allusers" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">👥 All Users — تمام صارفین</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="search-box" style="width:260px"><input class="form-input" id="usrSearch" placeholder="🔍 Search users..." oninput="filterUsers(this.value)"/></div>
+              <select class="form-select" style="width:auto" id="roleFilter" onchange="filterUsers(document.getElementById('usrSearch').value)">
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="landlord">Landlord</option>
+                <option value="manager">Manager</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Email</th><th>Created</th><th>Status</th></tr></thead>
+                <tbody id="allUsersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOGS -->
+        <div data-tab-content="logs" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">📋 Activity Logs — سرگرمی لاگ</div></div>
+            <button class="btn btn-sm btn-outline" onclick="loadLogs()">🔄 Refresh</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Farm</th><th>Type</th><th>Cost</th><th>Recorded By</th></tr></thead>
+                <tbody id="logsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Landlord Modal -->
+<div class="modal-overlay" id="createLandlordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👑 Create Landlord Account</div>
+      <button class="modal-close" onclick="closeModal('createLandlordModal')">✕</button>
+    </div>
+    <div id="llAlert" class="modal-alert error"></div>
+    <div class="form-group"><label class="form-label">👤 Full Name *</label><input class="form-input" id="ll_name" placeholder="Muhammad Ahmed"/></div>
+    <div class="input-grid-2">
+      <div class="form-group"><label class="form-label">📧 Email *</label><input class="form-input" type="email" id="ll_email" placeholder="ahmed@email.com"/></div>
+      <div class="form-group"><label class="form-label">📞 Phone</label><input class="form-input" id="ll_phone" placeholder="03001234567"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">🔑 Password *</label><input class="form-input" type="password" id="ll_pass" placeholder="Min 6 characters"/></div>
+    <button class="btn btn-primary btn-full" id="llBtn" onclick="createLandlord()">✅ Create Landlord Account</button>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetPassModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔑 Reset Password</div>
+      <button class="modal-close" onclick="closeModal('resetPassModal')">✕</button>
+    </div>
+    <div style="background:var(--warning-bg);color:var(--warning);padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;margin-bottom:16px">
+      ⚠️ A password reset email will be sent to the user's email address.
+    </div>
+    <div style="font-size:14px;margin-bottom:20px">
+      Send reset email to: <strong id="resetEmailDisplay"></strong>
+    </div>
+    <div id="resetAlert" class="modal-alert"></div>
+    <div class="flex-gap">
+      <button class="btn btn-primary btn-full" id="resetBtn" onclick="sendResetEmail()">📧 Send Reset Email</button>
+      <button class="btn btn-outline" onclick="closeModal('resetPassModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit User Details</div>
+      <button class="modal-close" onclick="closeModal('editUserModal')">✕</button>
+    </div>
+    <div id="editAlert" class="modal-alert error"></div>
+    <input type="hidden" id="edit_uid"/>
+    <div class="form-group"><label class="form-label">👤 Full Name</label><input class="form-input" id="edit_name" placeholder="Full name"/></div>
+    <div class="form-group"><label class="form-label">📞 Phone</label><input class="form-input" id="edit_phone" placeholder="Phone number"/></div>
+    <div class="form-group">
+      <label class="form-label">⚡ Status</label>
+      <select class="form-select" id="edit_status">
+        <option value="active">✅ Active</option>
+        <option value="suspended">🚫 Suspended</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveUserEdit()">💾 Save Changes</button>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🗑️ Delete User</div>
+      <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+    </div>
+    <div style="background:var(--danger-bg);color:var(--danger);padding:14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;margin-bottom:16px">
+      ⚠️ This will delete the Firestore record. The Firebase Auth account will remain (you can delete it from Firebase Console).
+    </div>
+    <div style="font-size:14px;margin-bottom:20px">Delete user: <strong id="deleteUserName"></strong>?</div>
+    <input type="hidden" id="delete_uid"/>
+    <div class="flex-gap">
+      <button class="btn btn-danger btn-full" onclick="confirmDelete()">🗑️ Yes, Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('deleteModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- View User Modal -->
+<div class="modal-overlay" id="viewUserModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 User Details</div>
+      <button class="modal-close" onclick="closeModal('viewUserModal')">✕</button>
+    </div>
+    <div id="viewUserContent"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, runTransaction, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey:"AIzaSyDpTPibk-7_kqyJdfN94KrLlcKkoNnqIYE", authDomain:"farmledger-e85e3.firebaseapp.com", projectId:"farmledger-e85e3", storageBucket:"farmledger-e85e3.firebasestorage.app", messagingSenderId:"922324809308", appId:"1:922324809308:web:05c015ce12e55034e99899" });
+  const auth = getAuth(app), db = getFirestore(app);
+  try { await enableIndexedDbPersistence(db); } catch {}
+
+  let ME = null, allUsers = [], allLandlords = [], allManagers = [], allFarms = [], allActivities = [];
+  let resetTargetEmail = '', deleteTargetUid = '';
+
+  // ── Toast ────────────────────────────────────────────────────
+  function toast(msg, type='success') {
+    const c=document.getElementById('toast-container'), t=document.createElement('div');
+    t.className=`toast ${type}`;
+    t.innerHTML=`<span>${{success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'}[type]}</span><span>${msg}</span>`;
+    c.appendChild(t); requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3500);
+  }
+  window.openModal  = id => document.getElementById(id)?.classList.add('open');
+  window.closeModal = id => document.getElementById(id)?.classList.remove('open');
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+  // ── Online ───────────────────────────────────────────────────
+  function updateOnline(){const el=document.getElementById('onlineIndicator'),bn=document.getElementById('offlineBanner'),on=navigator.onLine;if(el){el.className=`online-indicator ${on?'online':'offline'}`;el.innerHTML=`<div class="online-dot"></div>${on?'Online':'Offline'}`;}if(bn)bn.classList.toggle('show',!on);}
+  window.addEventListener('online',()=>{updateOnline();toast('Back online!','success');});
+  window.addEventListener('offline',()=>{updateOnline();toast('Offline mode','warning');});
+  updateOnline();
+
+  // ── Sidebar & Tabs ───────────────────────────────────────────
+  const tog=document.getElementById('menuToggle'),sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay');
+  tog?.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('show');});
+  ov?.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('show');});
+
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.nav-item[data-tab]').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
+    document.querySelectorAll('[data-tab-content]').forEach(c=>c.classList.toggle('hidden',c.dataset.tabContent!==tab));
+    document.getElementById('pageBreadcrumb').textContent = tab.charAt(0).toUpperCase()+tab.slice(1);
+    sb.classList.remove('open'); ov.classList.remove('show');
+    if(tab==='logs') loadLogs();
+  };
+  document.querySelectorAll('.nav-item[data-tab]').forEach(i=>i.addEventListener('click',()=>switchTab(i.dataset.tab)));
+
+  // ── Auth ─────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href='../index.html'; return; }
+    try {
+      const snap=await getDoc(doc(db,'users',user.uid));
+      if(!snap.exists()||snap.data().role!=='admin'){window.location.href='../index.html';return;}
+      ME={uid:user.uid,...snap.data()};
+      document.getElementById('sidebarName').textContent=ME.name||'Admin';
+      document.getElementById('sidebarAvatar').textContent=(ME.name||'A').charAt(0).toUpperCase();
+      await loadAll();
+      document.getElementById('pageLoader').classList.add('hidden');
+      document.getElementById('appContent').classList.remove('hidden');
+    } catch(e) { document.getElementById('pageLoader').innerHTML=`<div style="color:red;padding:20px">❌ ${e.message}</div>`; }
+  });
+
+  // ── Load All Data ────────────────────────────────────────────
+  async function loadAll() {
+    const [usersSnap, farmsSnap, actsSnap] = await Promise.all([
+      getDocs(collection(db,'users')),
+      getDocs(collection(db,'farms')),
+      getDocs(collection(db,'activities'))
+    ]);
+    allUsers     = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
+    allLandlords = allUsers.filter(u=>u.role==='landlord');
+    allManagers  = allUsers.filter(u=>u.role==='manager');
+    allFarms     = farmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    allActivities= actsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    renderOverview();
+    renderLandlords(allLandlords);
+    renderManagers(allManagers);
+    renderAllUsers(allUsers);
+  }
+
+  // ── Overview ─────────────────────────────────────────────────
+  function renderOverview() {
+    const totalExp = allActivities.reduce((s,a)=>s+Number(a.cost||0),0);
+    document.getElementById('adminStats').innerHTML=`
+      <div class="stat-card gold"><div class="stat-icon gold">👑</div><div class="stat-label">Landlords</div><div class="stat-value">${allLandlords.length}</div></div>
+      <div class="stat-card info"><div class="stat-icon blue">👨‍💼</div><div class="stat-label">Managers</div><div class="stat-value">${allManagers.length}</div></div>
+      <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-label">Total Farms</div><div class="stat-value">${allFarms.length}</div></div>
+      <div class="stat-card warning"><div class="stat-icon orange">📋</div><div class="stat-label">Total Activities</div><div class="stat-value">${allActivities.length}</div></div>`;
+
+    document.getElementById('overviewLandlords').innerHTML = allLandlords.length===0
+      ? '<tr><td colspan="4" style="text-align:center;padding:20px;color:#999">No landlords yet</td></tr>'
+      : allLandlords.map(l=>`<tr>
+          <td><span class="badge badge-gold">${l.userId||'—'}</span></td>
+          <td><strong>${l.name}</strong><div class="text-xs text-muted">${l.email||''}</div></td>
+          <td><span class="badge ${l.status==='suspended'?'badge-red':'badge-green'}">${l.status||'active'}</span></td>
+          <td><div class="action-menu-wrap">
+            <button class="btn-dots" onclick="toggleMenu('menu-ov-${l.uid}')">⋮</button>
+            <div class="action-menu" id="menu-ov-${l.uid}">
+              <button onclick="closeMenus();openView('${l.uid}')">👁️ View</button>
+              <button onclick="closeMenus();openEdit('${l.uid}')">✏️ Edit</button>
+              <button onclick="closeMenus();openResetPass('${l.email}')">🔑 Reset Password</button>
+              <button class="danger" onclick="closeMenus();openDelete('${l.uid}','${l.name}')">🗑️ Delete</button>
+            </div>
+          </div></td>
+        </tr>`).join('');
+
+    const activeUsers = allUsers.filter(u=>u.status!=='suspended').length;
+    const suspended   = allUsers.filter(u=>u.status==='suspended').length;
+    document.getElementById('platformStats').innerHTML=`
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)"><span class="text-muted">Total Users</span><strong>${allUsers.length}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)"><span cla
