@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FarmLedger — Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#1a5c1e"/>
+  <link rel="manifest" href="../manifest.json"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🌾</div>
+      <div class="sidebar-logo-text">
+        <div class="sidebar-logo-name">FarmLedger</div>
+        <div class="sidebar-logo-sub">Admin Panel</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+      <div>
+        <div class="sidebar-user-name" id="sidebarName">Admin</div>
+        <div class="sidebar-user-role">System Administrator</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="nav-section-title">Dashboard</div>
+      <button class="nav-item active" data-tab="overview">
+        <span class="nav-icon">📊</span> Overview
+      </button>
+      <div class="nav-section-title">Management</div>
+      <button class="nav-item" data-tab="landlords">
+        <span class="nav-icon">👑</span> Landlords
+      </button>
+      <button class="nav-item" data-tab="managers">
+        <span class="nav-icon">👨‍💼</span> Managers
+      </button>
+      <button class="nav-item" data-tab="allusers">
+        <span class="nav-icon">👥</span> All Users
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout" id="logoutBtn">🚪 Logout — لاگ آؤٹ</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <!-- Offline banner -->
+    <div class="offline-banner" id="offlineBanner">
+      📵 Offline Mode — Changes will sync when connected | آف لائن موڈ
+    </div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div class="page-breadcrumb">Admin / <strong id="pageBreadcrumb">Overview</strong></div>
+      </div>
+      <div class="topbar-right">
+        <div class="online-indicator online" id="onlineIndicator">
+          <div class="online-dot"></div>Online
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div id="pageLoader" class="page-loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading FarmLedger...</div>
+      </div>
+
+      <div id="appContent" class="hidden">
+
+        <!-- Overview Tab -->
+        <div data-tab-content="overview">
+          <div class="content-header">
+            <div>
+              <div class="content-title">📊 System Overview</div>
+              <div class="content-subtitle">FarmLedger platform statistics — پلیٹ فارم کا جائزہ</div>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('createLandlordModal')">➕ Create Landlord</button>
+          </div>
+          <div class="stats-grid" id="adminStats"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span class="icon">👑</span> Recent Landlords</div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+                  <tbody id="recentLandlords"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span class="icon">👨‍💼</span> Recent Managers</div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>ID</th><th>Name</th><th>Landlord</th></tr></thead>
+                  <tbody id="recentManagers"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Landlords Tab -->
+        <div data-tab-content="landlords" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">👑 Landlords — زمیندار</div>
+              <div class="content-subtitle">Manage all landlord accounts</div>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('createLandlordModal')">➕ Add Landlord</button>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="search-box" style="width:280px">
+                <input class="form-input" id="llSearch" placeholder="Search landlords..." oninput="filterTable('llSearch','landlordsTable')"/>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="landlordsTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Created</th><th>Actions</th></tr></thead>
+                <tbody id="landlordsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Managers Tab -->
+        <div data-tab-content="managers" class="hidden">
+          <div class="content-header">
+            <div class="content-title">👨‍💼 Managers — منیجر</div>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Landlord</th><th>Created</th></tr></thead>
+                <tbody id="managersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Users Tab -->
+        <div data-tab-content="allusers" class="hidden">
+          <div class="content-header">
+            <div class="content-title">👥 All Users — تمام صارفین</div>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Email</th><th>Status</th><th>Created</th></tr></thead>
+                <tbody id="allUsersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Landlord Modal -->
+<div class="modal-overlay" id="createLandlordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👑 Create Landlord Account</div>
+      <button class="modal-close" onclick="closeModal('createLandlordModal')">✕</button>
+    </div>
+    <div id="llAlert" class="modal-alert error"></div>
+    <div class="form-group"><label class="form-label">👤 Full Name *</label><input class="form-input" id="ll_name" placeholder="Muhammad Ahmed"/></div>
+    <div class="input-grid-2">
+      <div class="form-group"><label class="form-label">📧 Email *</label><input class="form-input" type="email" id="ll_email" placeholder="ahmed@email.com"/></div>
+      <div class="form-group"><label class="form-label">📞 Phone</label><input class="form-input" id="ll_phone" placeholder="03001234567"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">🔑 Password *</label><input class="form-input" type="password" id="ll_pass" placeholder="Minimum 6 characters"/></div>
+    <button class="btn btn-primary btn-full" id="llBtn" onclick="createLandlord()">✅ Create Landlord Account</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, runTransaction, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey:"AIzaSyDpTPibk-7_kqyJdfN94KrLlcKkoNnqIYE", authDomain:"farmledger-e85e3.firebaseapp.com", projectId:"farmledger-e85e3", storageBucket:"farmledger-e85e3.firebasestorage.app", messagingSenderId:"922324809308", appId:"1:922324809308:web:05c015ce12e55034e99899" });
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  try { await enableIndexedDbPersistence(db); } catch {}
+
+  let currentUser = null;
+  let allLandlords = [], allManagers = [], allUsers = [];
+
+  // ── Toast ───────────────────────────────────────────────────
+  function toast(msg, type='success') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className=`toast ${type}`;
+    const icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+    t.innerHTML=`<span>${icons[type]||'✅'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3500);
+  }
+
+  window.openModal  = id => document.getElementById(id)?.classList.add('open');
+  window.closeModal = id => document.getElementById(id)?.classList.remove('open');
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+  // ── Online indicator ────────────────────────────────────────
+  function updateOnline() {
+    const el=document.getElementById('onlineIndicator'), bn=document.getElementById('offlineBanner');
+    const on=navigator.onLine;
+    if(el){el.className=`online-indicator ${on?'online':'offline'}`;el.innerHTML=`<div class="online-dot"></div>${on?'Online':'Offline'}`;}
+    if(bn)bn.classList.toggle('show',!on);
+  }
+  window.addEventListener('online',()=>{updateOnline();toast('Back online! Syncing...','success');});
+  window.addEventListener('offline',()=>{updateOnline();toast('Offline mode — changes will sync later','warning');});
+  updateOnline();
+
+  // ── Sidebar ─────────────────────────────────────────────────
+  const toggle=document.getElementById('menuToggle'), sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
+  toggle?.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+  overlay?.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+
+  // ── Tabs ─────────────────────────────────────────────────────
+  document.querySelectorAll('.nav-item[data-tab]').forEach(item=>{
+    item.addEventListener('click',()=>{
+      const tab=item.dataset.tab;
+      document.querySelectorAll('.nav-item[data-tab]').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('[data-tab-content]').forEach(c=>c.classList.toggle('hidden',c.dataset.tabContent!==tab));
+      document.getElementById('pageBreadcrumb').textContent=item.textContent.trim();
+      sidebar.classList.remove('open'); overlay.classList.remove('show');
+    });
+  });
+
+  // ── Auth ─────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href='../index.html'; return; }
+    try {
+      const snap = await getDoc(doc(db,'users',user.uid));
+      if (!snap.exists()||snap.data().role!=='admin') { window.location.href='../index.html'; return; }
+      currentUser = { uid:user.uid, ...snap.data() };
+      document.getElementById('sidebarName').textContent = currentUser.name||'Admin';
+      document.getElementById('sidebarAvatar').textContent = (currentUser.name||'A').charAt(0).toUpperCase();
+      await loadAll();
+      document.getElementById('pageLoader').classList.add('hidden');
+      document.getElementById('appContent').classList.remove('hidden');
+    } catch(e) {
+      document.getElementById('pageLoader').innerHTML=`<div style="color:red;padding:20px;text-align:center">❌ Error: ${e.message}</div>`;
+    }
+  });
+
+  async function loadAll() {
+    const snap = await getDocs(collection(db,'users'));
+    allUsers = snap.docs.map(d=>({uid:d.id,...d.data()}));
+    allLandlords = allUsers.filter(u=>u.role==='landlord');
+    allManagers  = allUsers.filter(u=>u.role==='manager');
+
+    const farmsSnap = await getDocs(collection(db,'farms'));
+    const farmsCount = farmsSnap.size;
+    const actsSnap = await getDocs(collection(db,'activities'));
+    const actsCount = actsSnap.size;
+
+    // Stats
+    document.getElementById('adminStats').innerHTML=`
+      <div class="stat-card gold"><div class="stat-icon gold">👑</div><div class="stat-label">Total Landlords</div><div class="stat-value">${allLandlords.length}</div></div>
+      <div class="stat-card info"><div class="stat-icon blue">👨‍💼</div><div class="stat-label">Total Managers</div><div class="stat-value">${allManagers.length}</div></div>
+      <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-label">Total Farms</div><div class="stat-value">${farmsCount}</div></div>
+      <div class="stat-card warning"><div class="stat-icon orange">📋</div><div class="stat-label">Total Activities</div><div class="stat-value">${actsCount}</div></div>`;
+
+    // Recent landlords
+    document.getElementById('recentLandlords').innerHTML = allLandlords.length===0
+      ? '<tr><td colspan="4" style="text-align:center;padding:20px;color:#999">No landlords yet</td></tr>'
+      : allLandlords.slice(0,5).map(l=>`<tr><td><span class="badge badge-gold">${l.userId||'—'}</span></td><td><strong>${l.name}</strong></td><td class="text-muted text-sm">${l.email||'—'}</td><td><span class="badge badge-green">Active</span></td></tr>`).join('');
+
+    // Recent managers
+    document.getElementById('recentManagers').innerHTML = allManagers.length===0
+      ? '<tr><td colspan="3" style="text-align:center;padding:20px;color:#999">No managers yet</td></tr>'
+      : allManagers.slice(0,5).map(m=>{
+          const ll=allLandlords.find(l=>l.userId===m.landlordId);
+          return `<tr><td><span class="badge badge-blue">${m.userId||'—'}</span></td><td><strong>${m.name}</strong></td><td class="text-muted text-sm">${ll?ll.name:'—'}</td></tr>`;
+        }).join('');
+
+    // Landlords table
+    document.getElementById('landlordsBody').innerHTML = allLandlords.length===0
+      ? '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">No landlords yet. Create one!</td></tr>'
+      : allLandlords.map(l=>`<tr>
+          <td><span class="badge badge-gold">${l.userId||'—'}</span></td>
+          <td><strong>${l.name}</strong></td>
+          <td class="text-sm">${l.email||'—'}</td>
+          <td class="text-sm">${l.phone||'—'}</td>
+          <td class="text-muted text-sm">${l.createdAt?.toDate?.().toLocaleDateString()||'—'}</td>
+          <td><div class="td-actions"><span class="badge badge-green">Active</span></div></td>
+        </tr>`).join('');
+
+    // Managers table
+    document.getElementById('managersBody').innerHTML = allManagers.length===0
+      ? '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999">No managers yet</td></tr>'
+      : allManagers.map(m=>{
+          const ll=allLandlords.find(l=>l.userId===m.landlordId);
+          return `<tr>
+            <td><span class="badge badge-blue">${m.userId||'—'}</span></td>
+            <td><strong>${m.name}</strong></td>
+            <td class="text-sm">${m.email||'—'}</td>
+            <td class="text-sm">${ll?ll.name:'—'}</td>
+            <td class="text-muted text-sm">${m.createdAt?.toDate?.().toLocaleDateString()||'—'}</td>
+          </tr>`;
+        }).join('');
+
+    // All users
+    const roleColors={admin:'badge-blue',landlord:'badge-gold',manager:'badge-blue',farmer:'badge-green'};
+    document.getElementById('allUsersBody').innerHTML = allUsers.map(u=>`<tr>
+      <td><span class="badge badge-gray">${u.userId||'—'}</span></td>
+      <td><strong>${u.name}</strong></td>
+      <td><span class="badge ${roleColors[u.role]||'badge-gray'}">${u.role}</span></td>
+      <td class="text-sm">${u.email||'—'}</td>
+      <td><span class="badge badge-green">Active</span></td>
+      <td class="text-muted text-sm">${u.createdAt?.toDate?.().toLocaleDateString()||'—'}</td>
+    </tr>`).join('');
+  }
+
+  // ── Create Landlord ─────────────────────────────────────────
+  window.createLandlord = async function() {
+    const name=document.getElementById('ll_name').value.trim(), email=document.getElementById('ll_email').value.trim();
+    const pass=document.getElementById('ll_pass').value.trim(), phone=document.getElementById('ll_phone').value.trim();
+    const al=document.getElementById('llAlert'), btn=document.getElementById('llBtn');
+    al.style.display='none';
+    if(!name||!email||!pass){al.textContent='⚠️ Name, email and password are required';al.className='modal-alert error show';al.style.display='block';return;}
+    if(pass.length<6){al.textContent='⚠️ Password must be at least 6 characters';al.className='modal-alert error show';al.style.display='block';return;}
+    btn.textContent='⏳ Creating...'; btn.disabled=true;
+    try {
+      const ref=doc(db,'counters','landlords'); let userId;
+      await runTransaction(db,async tx=>{
+        const s=await tx.get(ref); const count=s.exists()?(s.data().count||0)+1:1;
+        tx.set(ref,{count}); userId=`LND-${String(count).padStart(3,'0')}`;
+      });
+      const cred=await createUserWithEmailAndPassword(auth,email,pass);
+      await setDoc(doc(db,'users',cred.user.uid),{uid:cred.user.uid,userId,name,email,phone,role:'landlord',status:'active',setupComplete:true,createdBy:currentUser.uid,createdAt:serverTimestamp()});
+      toast(`✅ Landlord ${name} created! ID: ${userId}`);
+      closeModal('createLandlordModal');
+      ['ll_name','ll_email','ll_pass','ll_phone'].forEach(id=>document.getElementById(id).value='');
+      await loadAll();
+    } catch(e){
+      al.textContent='❌ '+(e.code==='auth/email-already-in-use'?'Email already registered':e.message);
+      al.className='modal-alert error show'; al.style.display='block';
+    }
+    btn.textContent='✅ Create Landlord Account'; btn.disabled=false;
+  };
+
+  // ── Filter table ────────────────────────────────────────────
+  window.filterTable = function(inputId, tableId) {
+    const val=document.getElementById(inputId).value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr=>{
+      tr.style.display=tr.textContent.toLowerCase().includes(val)?'':'none';
+    });
+  };
+
+  // ── Logout ───────────────────────────────────────────────────
+  document.getElementById('logoutBtn').addEventListener('click',async()=>{
+    if(!confirm('Logout from FarmLedger?'))return;
+    await signOut(auth); window.location.href='../index.html';
+  });
+
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('../sw.js').catch(()=>{});
+</script>
+</body>
+</html>
