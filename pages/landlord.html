@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FarmLedger — Landlord</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#1a5c1e"/>
+  <link rel="manifest" href="../manifest.json"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🌾</div>
+      <div class="sidebar-logo-text">
+        <div class="sidebar-logo-name">FarmLedger</div>
+        <div class="sidebar-logo-sub">Landlord Panel</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">L</div>
+      <div>
+        <div class="sidebar-user-name" id="sidebarName">Landlord</div>
+        <div class="sidebar-user-role"><span class="badge badge-gold" style="font-size:10px">👑 Landlord</span></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Dashboard</div>
+      <button class="nav-item active" data-tab="overview"><span class="nav-icon">📊</span> Overview</button>
+      <button class="nav-item" data-tab="farms"><span class="nav-icon">🌱</span> My Farms</button>
+      <div class="nav-section-title">Records</div>
+      <button class="nav-item" data-tab="activities"><span class="nav-icon">📋</span> Activities</button>
+      <button class="nav-item" data-tab="harvests"><span class="nav-icon">🌾</span> Harvests</button>
+      <button class="nav-item" data-tab="ledger"><span class="nav-icon">📒</span> Farm Ledger</button>
+      <div class="nav-section-title">Tools</div>
+      <button class="nav-item" data-tab="market"><span class="nav-icon">📈</span> Market Prices</button>
+      <button class="nav-item" data-tab="weather"><span class="nav-icon">🌤️</span> Weather</button>
+      <div class="nav-section-title">Team</div>
+      <button class="nav-item" data-tab="managers"><span class="nav-icon">👨‍💼</span> Managers</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="offline-banner" id="offlineBanner">📵 Offline Mode — آف لائن — Data will sync automatically</div>
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div class="page-breadcrumb">Landlord / <strong id="pageBreadcrumb">Overview</strong></div>
+      </div>
+      <div class="topbar-right">
+        <div class="online-indicator online" id="onlineIndicator"><div class="online-dot"></div>Online</div>
+        <button class="btn btn-sm btn-outline" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div id="pageLoader" class="page-loader"><div class="spinner"></div><div class="loader-text">Loading your farms...</div></div>
+      <div id="appContent" class="hidden">
+
+        <!-- OVERVIEW -->
+        <div data-tab-content="overview">
+          <div class="content-header">
+            <div>
+              <div class="content-title">📊 Overview — جائزہ</div>
+              <div class="content-subtitle" id="welcomeMsg">Welcome back!</div>
+            </div>
+            <button class="btn btn-primary" onclick="switchTab('farms')">🌱 View Farms</button>
+          </div>
+          <div class="stats-grid" id="llStats"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><span class="icon">📈</span> Monthly Profit Chart</div></div>
+              <div class="chart-wrap"><canvas id="profitChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><span class="icon">🌱</span> Farm Summary</div></div>
+              <div id="farmSummaryList"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><span class="icon">📒</span> Recent Activity</div></div>
+            <div class="timeline" id="recentTimeline"></div>
+          </div>
+        </div>
+
+        <!-- FARMS -->
+        <div data-tab-content="farms" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">🌱 My Farms — میرے کھیت</div></div>
+          </div>
+          <div class="farms-grid" id="farmsGrid"></div>
+        </div>
+
+        <!-- ACTIVITIES -->
+        <div data-tab-content="activities" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">📋 Farm Activities — سرگرمیاں</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="flex-gap" style="flex-wrap:wrap;gap:10px">
+                <select class="form-select" style="width:auto" id="actFarmFilter" onchange="filterActivities()">
+                  <option value="">All Farms</option>
+                </select>
+                <select class="form-select" style="width:auto" id="actTypeFilter" onchange="filterActivities()">
+                  <option value="">All Types</option>
+                  <option value="diesel">⛽ Diesel</option>
+                  <option value="fertilizer">🧪 Fertilizer</option>
+                  <option value="seeds">🌱 Seeds</option>
+                  <option value="labor">👷 Labor</option>
+                  <option value="pesticide">💊 Pesticide</option>
+                  <option value="equipment">🔧 Equipment</option>
+                  <option value="water">💧 Water</option>
+                  <option value="other">📦 Other</option>
+                </select>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="printActivities()">🖨️ Print</button>
+            </div>
+            <div class="table-wrap">
+              <table id="activitiesTable">
+                <thead><tr><th>Date</th><th>Farm</th><th>Type</th><th>Qty</th><th>Cost</th><th>Notes</th></tr></thead>
+                <tbody id="activitiesBody"></tbody>
+              </table>
+            </div>
+            <div id="activitiesTotalRow" style="padding:14px 16px;font-weight:800;color:var(--danger);background:var(--danger-bg);border-radius:0 0 var(--radius-sm) var(--radius-sm)"></div>
+          </div>
+        </div>
+
+        <!-- HARVESTS -->
+        <div data-tab-content="harvests" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">🌾 Harvests — فصل</div></div>
+            <button class="btn btn-sm btn-outline" onclick="printHarvests()">🖨️ Print</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Farm</th><th>Crop</th><th>Quantity</th><th>Price/Unit</th><th>Total Income</th></tr></thead>
+                <tbody id="harvestsBody"></tbody>
+              </table>
+            </div>
+            <div id="harvestTotalRow" style="padding:14px 16px;font-weight:800;color:var(--primary);background:var(--primary-light);border-radius:0 0 var(--radius-sm) var(--radius-sm)"></div>
+          </div>
+        </div>
+
+        <!-- LEDGER -->
+        <div data-tab-content="ledger" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">📒 Farm Ledger — کھاتہ</div></div>
+            <button class="btn btn-outline btn-sm" onclick="printLedger()">🖨️ Print Ledger</button>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <select class="form-select" style="width:auto;max-width:240px" id="ledgerFarmFilter" onchange="buildLedger()">
+                <option value="">All Farms</option>
+              </select>
+            </div>
+            <div class="timeline" id="ledgerTimeline"></div>
+            <div class="profit-summary" id="ledgerSummary"></div>
+          </div>
+        </div>
+
+        <!-- MARKET PRICES -->
+        <div data-tab-content="market" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">📈 Market Prices — منڈی کے بھاؤ</div>
+              <div class="content-subtitle">Pakistan commodity prices (indicative)</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="loadMarket()">🔄 Refresh</button>
+          </div>
+          <div class="market-grid" id="marketGrid"></div>
+          <div class="card mt-16">
+            <div class="card-header"><div class="card-title"><span class="icon">📊</span> Price Trends</div></div>
+            <div class="chart-wrap"><canvas id="marketChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- WEATHER -->
+        <div data-tab-content="weather" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">🌤️ Weather — موسم</div></div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <div class="weather-widget" id="weatherWidget">
+                <div class="weather-search">
+                  <input id="cityInput" placeholder="Enter city — شہر لکھیں (e.g. Lahore)" value="Lahore"/>
+                  <button onclick="getWeather()">Search</button>
+                </div>
+                <div id="weatherContent"><div style="opacity:0.7;text-align:center;padding:20px">Loading weather...</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title mb-8">🌾 Farming Tips — زرعی مشورے</div>
+              <div id="weatherTips"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGERS -->
+        <div data-tab-content="managers" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">👨‍💼 My Managers — میرے منیجر</div></div>
+            <button class="btn btn-primary" onclick="openModal('createManagerModal')">➕ Add Manager</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Created</th></tr></thead>
+                <tbody id="managersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Manager Modal -->
+<div class="modal-overlay" id="createManagerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👨‍💼 Add Manager — منیجر شامل کریں</div>
+      <button class="modal-close" onclick="closeModal('createManagerModal')">✕</button>
+    </div>
+    <div id="mgAlert" class="modal-alert error"></div>
+    <div class="form-group"><label class="form-label">👤 Full Name *</label><input class="form-input" id="mg_name" placeholder="Manager name"/></div>
+    <div class="input-grid-2">
+      <div class="form-group"><label class="form-label">📧 Email *</label><input class="form-input" type="email" id="mg_email" placeholder="manager@email.com"/></div>
+      <div class="form-group"><label class="form-label">📞 Phone</label><input class="form-input" id="mg_phone" placeholder="03001234567"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">🔑 Password *</label><input class="form-input" type="password" id="mg_pass" placeholder="Min 6 characters"/></div>
+    <button class="btn btn-primary btn-full" id="mgBtn" onclick="createManager()">✅ Create Manager</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, runTransaction, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey:"AIzaSyDpTPibk-7_kqyJdfN94KrLlcKkoNnqIYE", authDomain:"farmledger-e85e3.firebaseapp.com", projectId:"farmledger-e85e3", storageBucket:"farmledger-e85e3.firebasestorage.app", messagingSenderId:"922324809308", appId:"1:922324809308:web:05c015ce12e55034e99899" });
+  const auth = getAuth(app), db = getFirestore(app);
+  try { await enableIndexedDbPersistence(db); } catch {}
+
+  let ME = null, farms=[], activities=[], harvests=[], managers=[];
+
+  // ── Helpers ─────────────────────────────────────────────────
+  const fmt = n => { const v=Number(n||0); if(v>=100000) return '₨'+( v/100000).toFixed(1)+'L'; return '₨'+v.toLocaleString('en-PK'); };
+  const fmtFull = n => '₨ '+Number(n||0).toLocaleString('en-PK');
+  const fmtDate = d => { try{ return d?.toDate?.().toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})||d||'—'; } catch{ return d||'—'; }};
+  const ACTIVITY_ICONS = {diesel:'⛽',fertilizer:'🧪',seeds:'🌱',labor:'👷',pesticide:'💊',equipment:'🔧',water:'💧',other:'📦'};
+
+  function toast(msg,type='success'){
+    const c=document.getElementById('toast-container'); const t=document.createElement('div'); t.className=`toast ${type}`;
+    t.innerHTML=`<span>${{success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'}[type]||'✅'}</span><span>${msg}</span>`;
+    c.appendChild(t); requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3500);
+  }
+  window.openModal  = id => document.getElementById(id)?.classList.add('open');
+  window.closeModal = id => document.getElementById(id)?.classList.remove('open');
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+  // ── Online ──────────────────────────────────────────────────
+  function updateOnline(){const el=document.getElementById('onlineIndicator'),bn=document.getElementById('offlineBanner'),on=navigator.onLine;if(el){el.className=`online-indicator ${on?'online':'offline'}`;el.innerHTML=`<div class="online-dot"></div>${on?'Online':'Offline'}`;}if(bn)bn.classList.toggle('show',!on);}
+  window.addEventListener('online',()=>{updateOnline();toast('Back online! Syncing...','success');});
+  window.addEventListener('offline',()=>{updateOnline();toast('Offline mode active','warning');});
+  updateOnline();
+
+  // ── Sidebar & Tabs ──────────────────────────────────────────
+  const tog=document.getElementById('menuToggle'),sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay');
+  tog?.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('show');});
+  ov?.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('show');});
+
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.nav-item[data-tab]').forEach(i=>{ if(i.dataset.tab===tab){i.classList.add('active');}else{i.classList.remove('active');}});
+    document.querySelectorAll('[data-tab-content]').forEach(c=>c.classList.toggle('hidden',c.dataset.tabContent!==tab));
+    document.getElementById('pageBreadcrumb').textContent = tab.charAt(0).toUpperCase()+tab.slice(1);
+    sb.classList.remove('open'); ov.classList.remove('show');
+  };
+
+  document.querySelectorAll('.nav-item[data-tab]').forEach(item=>{
+    item.addEventListener('click',()=>{ switchTab(item.dataset.tab); });
+  });
+
+  // ── Auth ─────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href='../index.html'; return; }
+    try {
+      const snap=await getDoc(doc(db,'users',user.uid));
+      if(!snap.exists()||snap.data().role!=='landlord'){window.location.href='../index.html';return;}
+      ME={uid:user.uid,...snap.data()};
+      document.getElementById('sidebarName').textContent=ME.name||'Landlord';
+      document.getElementById('sidebarAvatar').textContent=(ME.name||'L').charAt(0).toUpperCase();
+      document.getElementById('welcomeMsg').textContent=`Welcome back, ${ME.name}! — خوش آمدید`;
+      await loadAll();
+      document.getElementById('pageLoader').classList.add('hidden');
+      document.getElementById('appContent').classList.remove('hidden');
+      buildOverview(); loadMarket(); getWeather();
+    } catch(e) { document.getElementById('pageLoader').innerHTML=`<div style="color:red;padding:20px">Error: ${e.message}</div>`; }
+  });
+
+  async function loadAll() {
+    const [farmsSnap, actsSnap, harvSnap, mgrSnap] = await Promise.all([
+      getDocs(query(collection(db,'farms'),where('landlordId','==',ME.userId))),
+      getDocs(collection(db,'activities')),
+      getDocs(collection(db,'harvests')),
+      getDocs(query(collection(db,'users'),where('landlordId','==',ME.userId)))
+    ]);
+    farms     = farmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const farmIds = farms.map(f=>f.farmId);
+    activities= actsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(a=>farmIds.includes(a.farmId));
+    harvests  = harvSnap.docs.map(d=>({id:d.id,...d.data()})).filter(h=>farmIds.includes(h.farmId));
+    managers  = mgrSnap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.role==='manager');
+
+    // Populate farm filters
+    ['actFarmFilter','ledgerFarmFilter'].forEach(id=>{
+      const sel=document.getElementById(id); if(!sel)return;
+      sel.innerHTML='<option value="">All Farms</option>'+farms.map(f=>`<option value="${f.farmId}">${f.name}</option>`).join('');
+    });
+    renderFarms(); renderActivities(); renderHarvests(); renderManagers(); buildLedger();
+  }
+
+  // ── Overview ─────────────────────────────────────────────────
+  function buildOverview() {
+    const totalExp  = activities.reduce((s,a)=>s+Number(a.cost||0),0);
+    const totalHarv = harvests.reduce((s,h)=>s+Number(h.totalIncome||0),0);
+    const profit    = totalHarv - totalExp;
+    document.getElementById('llStats').innerHTML=`
+      <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-label">Total Farms</div><div class="stat-value">${farms.length}</div></div>
+      <div class="stat-card danger"><div class="stat-icon red">💸</div><div class="stat-label">Total Expenses</div><div class="stat-value pkr">${fmt(totalExp)}</div></div>
+      <div class="stat-card"><div class="stat-icon green">🌾</div><div class="stat-label">Harvest Income</div><div class="stat-value pkr">${fmt(totalHarv)}</div></div>
+      <div class="stat-card ${profit>=0?'':'danger'}"><div class="stat-icon ${profit>=0?'green':'red'}">${profit>=0?'📈':'📉'}</div><div class="stat-label">Net Profit</div><div class="stat-value pkr" style="color:${profit>=0?'var(--primary)':'var(--danger)'}">${fmt(profit)}</div></div>`;
+
+    // Farm summary list
+    document.getElementById('farmSummaryList').innerHTML = farms.length===0
+      ? '<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-title">No farms yet</div></div>'
+      : farms.map(f=>{
+          const exp=activities.filter(a=>a.farmId===f.farmId).reduce((s,a)=>s+Number(a.cost||0),0);
+          const inc=harvests.filter(h=>h.farmId===f.farmId).reduce((s,h)=>s+Number(h.totalIncome||0),0);
+          const pr=inc-exp;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-weight:700">${f.name}</div><div class="text-muted text-sm">${f.crop||'—'} • ${f.acres||'—'} acres</div></div>
+            <div style="text-align:right"><div style="font-weight:800;color:${pr>=0?'var(--primary)':'var(--danger)'}">${fmt(pr)}</div><div class="text-xs text-muted">profit</div></div>
+          </div>`;
+        }).join('');
+
+    // Recent timeline
+    const recent=[...activities.map(a=>({...a,type:'expense',sortDate:a.date})),...harvests.map(h=>({...h,type:'income',sortDate:h.date}))]
+      .sort((a,b)=>new Date(b.sortDate)-new Date(a.sortDate)).slice(0,8);
+    document.getElementById('recentTimeline').innerHTML = recent.length===0
+      ? '<div class="empty-state"><div class="empty-icon">📒</div><div class="empty-title">No records yet</div></div>'
+      : recent.map(r=>{
+          const farm=farms.find(f=>f.farmId===r.farmId);
+          if(r.type==='expense') return `<div class="timeline-item"><div class="timeline-icon" style="background:var(--danger-bg)">${ACTIVITY_ICONS[r.activityType]||'📦'}</div><div class="timeline-content"><div class="timeline-title">${r.activityType?.charAt(0).toUpperCase()+r.activityType?.slice(1)||'Activity'} — ${farm?.name||'?'}</div><div class="timeline-meta">${fmtDate(r.date)} ${r.notes?'• '+r.notes:''}</div></div><div class="timeline-amount expense">-${fmtFull(r.cost)}</div></div>`;
+          return `<div class="timeline-item"><div class="timeline-icon" style="background:var(--primary-light)">🌾</div><div class="timeline-content"><div class="timeline-title">Harvest: ${r.crop} — ${farm?.name||'?'}</div><div class="timeline-meta">${fmtDate(r.date)}</div></div><div class="timeline-amount income">+${fmtFull(r.totalIncome)}</div></div>`;
+        }).join('');
+
+    buildProfitChart();
+  }
+
+  // ── Profit Chart ─────────────────────────────────────────────
+  function buildProfitChart() {
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const expByMonth=Array(12).fill(0), incByMonth=Array(12).fill(0);
+    activities.forEach(a=>{ const m=new Date(a.date).getMonth(); if(!isNaN(m)) expByMonth[m]+=Number(a.cost||0); });
+    harvests.forEach(h=>{ const m=new Date(h.date).getMonth(); if(!isNaN(m)) incByMonth[m]+=Number(h.totalIncome||0); });
+    const ctx=document.getElementById('profitChart').getContext('2d');
+    if(window._profitChartInst)window._profitChartInst.destroy();
+    window._profitChartInst=new Chart(ctx,{type:'bar',data:{labels:months,datasets:[{label:'Expenses',data:expByMonth,backgroundColor:'rgba(198,40,40,0.7)',borderRadius:6},{label:'Income',data:incByMonth,backgroundColor:'rgba(26,92,30,0.7)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>'₨'+v.toLocaleString()}}}}});
+  }
+
+  // ── Farms ─────────────────────────────────────────────────────
+  function renderFarms() {
+    const grid=document.getElementById('farmsGrid');
+    if(farms.length===0){grid.innerHTML='<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-title">No farms yet</div><div class="empty-sub">Your managers will create farms for you</div></div>';return;}
+    grid.innerHTML=farms.map(f=>{
+      const exp=activities.filter(a=>a.farmId===f.farmId).reduce((s,a)=>s+Number(a.cost||0),0);
+      const inc=harvests.filter(h=>h.farmId===f.farmId).reduce((s,h)=>s+Number(h.totalIncome||0),0);
+      const pr=inc-exp;
+      return `<div class="farm-card">
+        <div class="farm-card-top">
+          <div class="farm-avatar">🌿</div>
+          <span class="badge badge-green">${f.farmId||'—'}</span>
+        </div>
+        <div class="farm-name">${f.name}</div>
+        <div class="farm-meta">${f.crop||'—'} • ${f.acres||'—'} acres • ${f.farmerName||'No farmer'}</div>
+        <div class="farm-stats">
+          <div class="farm-stat"><div class="farm-stat-label">Expenses</div><div class="farm-stat-value" style="color:var(--danger)">${fmt(exp)}</div></div>
+          <div class="farm-stat"><div class="farm-stat-label">Income</div><div class="farm-stat-value" style="color:var(--primary)">${fmt(inc)}</div></div>
+          <div class="farm-stat" style="grid-column:1/-1"><div class="farm-stat-label">Net Profit</div><div class="farm-stat-value" style="color:${pr>=0?'var(--primary)':'var(--danger)'}">${fmt(pr)}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Activities ───────────────────────────────────────────────
+  let filteredActs = [];
+  function renderActivities(list) {
+    filteredActs = list || activities;
+    const body=document.getElementById('activitiesBody');
+    if(filteredActs.length===0){body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#999">No activities found</td></tr>';document.getElementById('activitiesTotalRow').textContent='';return;}
+    const total=filteredActs.reduce((s,a)=>s+Number(a.cost||0),0);
+    body.innerHTML=filteredActs.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(a=>{
+      const farm=farms.find(f=>f.farmId===a.farmId);
+      return `<tr><td class="text-sm">${fmtDate(a.date)}</td><td><strong>${farm?.name||a.farmId||'—'}</strong></td><td><span class="badge badge-orange">${ACTIVITY_ICONS[a.activityType]||'📦'} ${a.activityType||'—'}</span></td><td class="text-sm">${a.quantity||'—'} ${a.unit||''}</td><td style="font-weight:800;color:var(--danger)">${fmtFull(a.cost)}</td><td class="text-muted text-sm">${a.notes||'—'}</td></tr>`;
+    }).join('');
+    document.getElementById('activitiesTotalRow').textContent=`Total Expenses: ${fmtFull(total)}`;
+  }
+
+  window.filterActivities = function() {
+    const farm=document.getElementById('actFarmFilter').value, type=document.getElementById('actTypeFilter').value;
+    let list=activities;
+    if(farm) list=list.filter(a=>a.farmId===farm);
+    if(type) list=list.filter(a=>a.activityType===type);
+    renderActivities(list);
+  };
+
+  // ── Harvests ─────────────────────────────────────────────────
+  function renderHarvests() {
+    const body=document.getElementById('harvestsBody');
+    if(harvests.length===0){body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#999">No harvests recorded yet</td></tr>';return;}
+    const total=harvests.reduce((s,h)=>s+Number(h.totalIncome||0),0);
+    body.innerHTML=harvests.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(h=>{
+      const farm=farms.find(f=>f.farmId===h.farmId);
+      return `<tr><td class="text-sm">${fmtDate(h.date)}</td><td><strong>${farm?.name||'—'}</strong></td><td>${h.crop||'—'}</td><td class="text-sm">${h.harvestAmount||'—'} ${h.unit||''}</td><td>${fmtFull(h.pricePerUnit)}/${h.unit||'unit'}</td><td style="font-weight:800;color:var(--primary)">${fmtFull(h.totalIncome)}</td></tr>`;
+    }).join('');
+    document.getElementById('harvestTotalRow').textContent=`Total Harvest Income: ${fmtFull(total)}`;
+  }
+
+  // ── Ledger ───────────────────────────────────────────────────
+  window.buildLedger = function() {
+    const farmId=document.getElementById('ledgerFarmFilter').value;
+    const acts = farmId ? activities.filter(a=>a.farmId===farmId) : activities;
+    const harvs = farmId ? harvests.filter(h=>h.farmId===farmId) : harvests;
+    const all=[...acts.map(a=>({date:a.date,title:`${a.activityType?.charAt(0).toUpperCase()+a.activityType?.slice(1)}${farms.find(f=>f.farmId===a.farmId)?' — '+farms.find(f=>f.farmId===a.farmId).name:''}`,icon:ACTIVITY_ICONS[a.activityType]||'📦',amount:-Number(a.cost||0),type:'expense',notes:a.notes})),...harvs.map(h=>({date:h.date,title:`Harvest: ${h.crop}${farms.find(f=>f.farmId===h.farmId)?' — '+farms.find(f=>f.farmId===h.farmId).name:''}`,icon:'🌾',amount:Number(h.totalIncome||0),type:'income',notes:''}))]
+      .sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const tl=document.getElementById('ledgerTimeline');
+    tl.innerHTML=all.length===0?'<div class="empty-state"><div class="empty-icon">📒</div><div class="empty-title">No records yet</div></div>'
+      :all.map(r=>`<div class="timeline-item"><div class="timeline-icon" style="background:${r.type==='income'?'var(--primary-light)':'var(--danger-bg)'}">${r.icon}</div><div class="timeline-content"><div class="timeline-title">${r.title}</div><div class="timeline-meta">${fmtDate(r.date)}${r.notes?' • '+r.notes:''}</div></div><div class="timeline-amount ${r.type}">${r.amount>=0?'+':''}${fmtFull(Math.abs(r.amount))}</div></div>`).join('');
+    const totalExp=acts.reduce((s,a)=>s+Number(a.cost||0),0);
+    const totalInc=harvs.reduce((s,h)=>s+Number(h.totalIncome||0),0);
+    const profit=totalInc-totalExp;
+    document.getElementById('ledgerSummary').innerHTML=`<div class="profit-item"><div class="profit-label">Total Expenses</div><div class="profit-value" style="color:var(--danger)">${fmtFull(totalExp)}</div></div><div class="profit-item"><div class="profit-label">Total Income</div><div class="profit-value" style="color:var(--primary)">${fmtFull(totalInc)}</div></div><div class="profit-item"><div class="profit-label">Net Profit</div><div class="profit-value" style="color:${profit>=0?'var(--primary)':'var(--danger)'}">${fmtFull(profit)}</div></div>`;
+  };
+
+  // ── Market Prices ─────────────────────────────────────────────
+  const MARKET=[
+    {crop:'Wheat',urdu:'گندم',icon:'🌾',price:3400,unit:'40kg',change:+2.1},
+    {crop:'Rice',urdu:'چاول',icon:'🍚',price:5200,unit:'40kg',change:-1.3},
+    {crop:'Cotton',urdu:'کپاس',icon:'🌿',price:8500,unit:'40kg',change:+3.5},
+    {crop:'Maize',urdu:'مکئی',icon:'🌽',price:2100,unit:'40kg',change:+0.8},
+    {crop:'Mustard',urdu:'سرسوں',icon:'🟡',price:9200,unit:'40kg',change:-0.5},
+    {crop:'Potato',urdu:'آلو',icon:'🥔',price:1800,unit:'40kg',change:+4.2},
+    {crop:'Onion',urdu:'پیاز',icon:'🧅',price:2400,unit:'40kg',change:-2.8},
+    {crop:'Sugarcane',urdu:'گنا',icon:'🎋',price:450,unit:'40kg',change:+1.0},
+  ];
+  window.loadMarket = function() {
+    document.getElementById('marketGrid').innerHTML=MARKET.map(m=>`<div class="market-card"><div class="market-crop">${m.icon}</div><div class="market-name">${m.crop}</div><div class="market-name-urdu">${m.urdu}</div><div class="market-price">₨${m.price.toLocaleString()}</div><div class="market-unit">per ${m.unit}</div><div class="market-change ${m.change>=0?'up':'down'}">${m.change>=0?'▲':'▼'} ${Math.abs(m.change)}%</div></div>`).join('');
+    const ctx=document.getElementById('marketChart').getContext('2d');
+    if(window._mkChartInst)window._mkChartInst.destroy();
+    window._mkChartInst=new Chart(ctx,{type:'bar',data:{labels:MARKET.map(m=>m.crop),datasets:[{label:'Price per 40kg (₨)',data:MARKET.map(m=>m.price),backgroundColor:MARKET.map(m=>m.change>=0?'rgba(26,92,30,0.7)':'rgba(198,40,40,0.7)'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₨'+v.toLocaleString()}}}}});
+  };
+
+  // ── Weather ───────────────────────────────────────────────────
+  window.getWeather = async function() {
+    const city=document.getElementById('cityInput').value||'Lahore';
+    document.getElementById('weatherContent').innerHTML='<div style="opacity:0.7;text-align:center;padding:20px">⏳ Loading weather...</div>';
+    try {
+      const r=await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+      const d=await r.json(); const c=d.current_condition[0];
+      const temp=c.temp_C, feels=c.FeelsLikeC, hum=c.humidity, wind=c.windspeedKmph, desc=c.weatherDesc[0].value;
+      const area=d.nearest_area[0].areaName[0].value;
+      const icons={'Sunny':'☀️','Clear':'🌙','Partly cloudy':'⛅','Cloudy':'☁️','Overcast':'☁️','Mist':'🌫️','Rain':'🌧️','Drizzle':'🌦️','Thundery':'⛈️','Snow':'❄️'};
+      const icon=Object.entries(icons).find(([k])=>desc.includes(k))?.[1]||'🌤️';
+      document.getElementById('weatherContent').innerHTML=`<div class="weather-main"><div class="weather-icon">${icon}</div><div><div class="weather-temp">${temp}°C</div><div class="weather-desc">${desc}</div><div class="weather-city">📍 ${area}</div></div></div><div class="weather-details"><div class="weather-detail"><div class="val">${feels}°C</div><div class="lbl">Feels Like</div></div><div class="weather-detail"><div class="val">${hum}%</div><div class="lbl">Humidity</div></div><div class="weather-detail"><div class="val">${wind} km/h</div><div class="lbl">Wind</div></div></div>`;
+      const tips=[];
+      if(Number(temp)>35)tips.push('🌡️ Very hot — water crops early morning or evening');
+      if(Number(hum)>80)tips.push('💧 High humidity — watch for fungal diseases');
+      if(Number(wind)>30)tips.push('💨 Strong winds — avoid pesticide spraying today');
+      if(desc.toLowerCase().includes('rain'))tips.push('🌧️ Rain expected — hold off irrigation');
+      if(tips.length===0)tips.push('✅ Good conditions for farming today');
+      document.getElementById('weatherTips').innerHTML=tips.map(t=>`<div style="padding:10px 14px;background:var(--primary-light);border-radius:var(--radius-sm);margin-bottom:8px;font-size:13px;font-weight:600;color:var(--primary)">${t}</div>`).join('');
+    } catch { document.getElementById('weatherContent').innerHTML='<div style="opacity:0.7;text-align:center;padding:20px">❌ Could not load weather. Check city name.</div>'; }
+  };
+  document.getElementById('cityInput').addEventListener('keydown',e=>{ if(e.key==='Enter') getWeather(); });
+
+  // ── Managers ─────────────────────────────────────────────────
+  function renderManagers(){
+    document.getElementById('managersBody').innerHTML=managers.length===0?'<tr><td colspan="5" style="text-align:center;padding:24px;color:#999">No managers yet. Add one!</td></tr>':managers.map(m=>`<tr><td><span class="badge badge-blue">${m.userId||'—'}</span></td><td><strong>${m.name}</strong></td><td class="text-sm">${m.email||'—'}</td><td class="text-sm">${m.phone||'—'}</td><td class="text-muted text-sm">${m.createdAt?.toDate?.().toLocaleDateString()||'—'}</td></tr>`).join('');
+  }
+
+  window.createManager = async function(){
+    const name=document.getElementById('mg_name').value.trim(), email=document.getElementById('mg_email').value.trim(), pass=document.getElementById('mg_pass').value.trim(), phone=document.getElementById('mg_phone').value.trim();
+    const al=document.getElementById('mgAlert'), btn=document.getElementById('mgBtn');
+    al.style.display='none';
+    if(!name||!email||!pass){al.textContent='⚠️ Name, email and password required';al.className='modal-alert error show';al.style.display='block';return;}
+    btn.textContent='⏳ Creating...';btn.disabled=true;
+    try {
+      const ref=doc(db,'counters','managers'); let userId;
+      await runTransaction(db,async tx=>{const s=await tx.get(ref);const count=s.exists()?(s.data().count||0)+1:1;tx.set(ref,{count});userId=`MGR-${String(count).padStart(3,'0')}`;});
+      const cred=await createUserWithEmailAndPassword(auth,email,pass);
+      await setDoc(doc(db,'users',cred.user.uid),{uid:cred.user.uid,userId,name,email,phone,role:'manager',status:'active',setupComplete:true,landlordId:ME.userId,createdBy:ME.uid,createdAt:serverTimestamp()});
+      toast(`✅ Manager ${name} created! ID: ${userId}`);
+      closeModal('createManagerModal');
+      ['mg_name','mg_email','mg_pass','mg_phone'].forEach(id=>document.getElementById(id).value='');
+      await loadAll();
+    } catch(e){al.textContent='❌ '+(e.code==='auth/email-already-in-use'?'Email already registered':e.message);al.className='modal-alert error show';al.style.display='block';}
+    btn.textContent='✅ Create Manager';btn.disabled=false;
+  };
+
+  // ── Print helpers ─────────────────────────────────────────────
+  window.printActivities = function(){
+    const total=filteredActs.reduce((s,a)=>s+Number(a.cost||0),0);
+    const rows=filteredActs.map(a=>{const f=farms.find(x=>x.farmId===a.farmId);return `<tr><td>${fmtDate(a.date)}</td><td>${f?.name||'—'}</td><td>${a.activityType}</td><td>${a.quantity||'—'} ${a.unit||''}</td><td>₨${Number(a.cost||0).toLocaleString()}</td><td>${a.notes||'—'}</td></tr>`;}).join('');
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Activities Report</title><style>body{font-family:Arial,sans-serif;padding:30px}h1{color:#1a5c1e}table{width:100%;border-collapse:collapse}th{background:#e8f5e9;padding:10px;text-align:left;border:1px solid #ccc}td{padding:8px 10px;border:1px solid #ddd}.total{font-weight:bold;color:#c62828;background:#ffebee;padding:12px}</style></head><body><h1>🌾 FarmLedger — Activities Report</h1><p>Generated: ${new Date().toLocaleDateString()}</p><table><thead><tr><th>Date</th><th>Farm</th><th>Type</th><th>Qty</th><th>Cost</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table><div class="total">Total Expenses: ₨${total.toLocaleString()}</div><script>window.onload=()=>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+    w.document.close();
+  };
+  window.printHarvests = function(){
+    const total=harvests.reduce((s,h)=>s+Number(h.totalIncome||0),0);
+    const rows=harvests.map(h=>{const f=farms.find(x=>x.farmId===h.farmId);return `<tr><td>${fmtDate(h.date)}</td><td>${f?.name||'—'}</td><td>${h.crop}</td><td>${h.harvestAmount} ${h.unit}</td><td>₨${Number(h.pricePerUnit||0).toLocaleString()}</td><td>₨${Number(h.totalIncome||0).toLocaleString()}</td></tr>`;}).join('');
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Harvests Report</title><style>body{font-family:Arial,sans-serif;padding:30px}h1{color:#1a5c1e}table{width:100%;border-collapse:collapse}th{background:#e8f5e9;padding:10px;text-align:left;border:1px solid #ccc}td{padding:8px 10px;border:1px solid #ddd}.total{font-weight:bold;color:#1a5c1e;background:#e8f5e9;padding:12px}</style></head><body><h1>🌾 FarmLedger — Harvest Report</h1><p>Generated: ${new Date().toLocaleDateString()}</p><table><thead><tr><th>Date</th><th>Farm</th><th>Crop</th><th>Quantity</th><th>Price/Unit</th><th>Total Income</th></tr></thead><tbody>${rows}</tbody></table><div class="total">Total Income: ₨${total.toLocaleString()}</div><script>window.onload=()=>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+    w.document.close();
+  };
+  window.printLedger = function(){
+    const farmId=document.getElementById('ledgerFarmFilter').value;
+    const acts=farmId?activities.filter(a=>a.farmId===farmId):activities;
+    const harvs=farmId?harvests.filter(h=>h.farmId===farmId):harvests;
+    const totalExp=acts.reduce((s,a)=>s+Number(a.cost||0),0);
+    const totalInc=harvs.reduce((s,h)=>s+Number(h.totalIncome||0),0);
+    const profit=totalInc-totalExp;
+    const farmName=farmId?farms.find(f=>f.farmId===farmId)?.name||farmId:'All Farms';
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Farm Ledger</title><style>body{font-family:Arial,sans-serif;padding:30px}h1{color:#1a5c1e}.summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0}.sum-box{background:#f5f5f5;padding:14px;border-radius:8px;text-align:center}.sum-box .lbl{font-size:11px;color:#666}.sum-box .val{font-size:18px;font-weight:bold;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#e8f5e9;padding:10px;text-align:left}td{padding:8px;border-bottom:1px solid #eee}.income{color:#1a5c1e;font-weight:bold}.expense{color:#c62828;font-weight:bold}</style></head><body>
+    <h1>📒 FarmLedger — Farm Ledger Report</h1><p>Farm: <strong>${farmName}</strong> | Generated: ${new Date().toLocaleDateString()}</p>
+    <div class="summary"><div class="sum-box"><div class="lbl">Total Expenses</div><div class="val expense">₨${totalExp.toLocaleString()}</div></div><div class="sum-box"><div class="lbl">Total Income</div><div class="val income">₨${totalInc.toLocaleString()}</div></div><div class="sum-box"><div class="lbl">Net Profit</div><div class="val" style="color:${profit>=0?'#1a5c1e':'#c62828'}">₨${profit.toLocaleString()}</div></div></div>
+    <table><thead><tr><th>Date</th><th>Description</th><th>Debit (خرچ)</th><th>Credit (آمدن)</th></tr></thead><tbody>
+    ${[...acts.map(a=>({date:a.date,desc:a.activityType+' — '+(farms.find(f=>f.farmId===a.farmId)?.name||''),debit:a.cost,credit:''})),...harvs.map(h=>({date:h.date,desc:'Harvest: '+h.crop+' — '+(farms.find(f=>f.farmId===h.farmId)?.name||''),debit:'',credit:h.totalIncome}))].sort((a,b)=>new Date(a.date)-new Date(b.date)).map(r=>`<tr><td>${r.date}</td><td>${r.desc}</td><td class="expense">${r.debit?'₨'+Number(r.debit).toLocaleString():''}</td><td class="income">${r.credit?'₨'+Number(r.credit).toLocaleString():''}</td></tr>`).join('')}
+    </tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+    w.document.close();
+  };
+
+  document.getElementById('logoutBtn').addEventListener('click',async()=>{if(!confirm('Logout?'))return;await signOut(auth);window.location.href='../index.html';});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('../sw.js').catch(()=>{});
+</script>
+</body>
+</html>
