@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FarmLedger — Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1a5c1e"/>
+  <link rel="manifest" href="../manifest.json"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    /* ── Dot Menu ─────────────────────────────────── */
+    .dot-wrap { position: relative; display: inline-block; }
+    .dot-btn { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; width: 34px; height: 34px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); transition: all 0.2s; line-height: 1; }
+    .dot-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+    .dot-menu { display: none; position: fixed; background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 9999; min-width: 200px; overflow: hidden; padding: 6px; }
+    .dot-menu.open { display: block; }
+    .dot-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 14px; border: none; background: none; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit; border-radius: 8px; transition: background 0.15s; }
+    .dot-menu button:hover { background: var(--primary-light); color: var(--primary); }
+    .dot-menu button.red { color: var(--danger); }
+    .dot-menu button.red:hover { background: var(--danger-bg); }
+    .dot-menu .menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+    /* ── Info Row ─────────────────────────────────── */
+    .info-row { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .lbl { color: var(--muted); }
+    .info-row .val { font-weight: 700; }
+    /* ── Quick Stats ──────────────────────────────── */
+    .quick-stat { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .quick-stat .qs-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .quick-stat .qs-value { font-size: 18px; font-weight: 800; color: var(--text); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🌾</div>
+      <div class="sidebar-logo-text">
+        <div class="sidebar-logo-name">FarmLedger</div>
+        <div class="sidebar-logo-sub">Admin Panel</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+      <div>
+        <div class="sidebar-user-name" id="sidebarName">Admin</div>
+        <div class="sidebar-user-role"><span class="badge badge-blue" style="font-size:10px">⚙️ Administrator</span></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Dashboard</div>
+      <button class="nav-item active" data-tab="overview"><span class="nav-icon">📊</span> Overview</button>
+      <div class="nav-section-title">Users</div>
+      <button class="nav-item" data-tab="landlords"><span class="nav-icon">👑</span> Landlords</button>
+      <button class="nav-item" data-tab="managers"><span class="nav-icon">👨‍💼</span> Managers</button>
+      <button class="nav-item" data-tab="allusers"><span class="nav-icon">👥</span> All Users</button>
+      <div class="nav-section-title">System</div>
+      <button class="nav-item" data-tab="logs"><span class="nav-icon">📋</span> Activity Logs</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="offline-banner" id="offlineBanner">📵 Offline Mode — Data will sync when connected</div>
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div class="page-breadcrumb">Admin / <strong id="pageBreadcrumb">Overview</strong></div>
+      </div>
+      <div class="topbar-right">
+        <div class="online-indicator online" id="onlineIndicator"><div class="online-dot"></div>Online</div>
+        <button class="btn btn-sm btn-primary" onclick="openModal('createLandlordModal')">➕ New Landlord</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div id="pageLoader" class="page-loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading Admin Panel...</div>
+      </div>
+
+      <div id="appContent" class="hidden">
+
+        <!-- OVERVIEW -->
+        <div data-tab-content="overview">
+          <div class="content-header">
+            <div>
+              <div class="content-title">📊 Overview</div>
+              <div class="content-subtitle">Platform summary — پلیٹ فارم کا جائزہ</div>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('createLandlordModal')">➕ New Landlord</button>
+          </div>
+          <div class="stats-grid" id="adminStats"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span class="icon">📈</span> Platform Stats</div>
+              </div>
+              <div id="platformStats"></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span class="icon">👑</span> Recent Landlords</div>
+                <button class="btn btn-sm btn-outline" onclick="switchTab('landlords')">View All →</button>
+              </div>
+              <div id="recentLandlordsList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LANDLORDS -->
+        <div data-tab-content="landlords" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">👑 Landlords — زمیندار</div>
+              <div class="content-subtitle" id="llSubtitle">Loading...</div>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('createLandlordModal')">➕ Add Landlord</button>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <input class="form-input" style="max-width:240px" id="llSearch" placeholder="🔍 Search..." oninput="filterLandlords(this.value)"/>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Managers</th><th>Status</th><th></th></tr></thead>
+                <tbody id="landlordsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGERS -->
+        <div data-tab-content="managers" class="hidden">
+          <div class="content-header">
+            <div>
+              <div class="content-title">👨‍💼 Managers — منیجر</div>
+              <div class="content-subtitle" id="mgSubtitle">Loading...</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <input class="form-input" style="max-width:240px" id="mgSearch" placeholder="🔍 Search..." oninput="filterManagers(this.value)"/>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Landlord</th><th>Status</th><th></th></tr></thead>
+                <tbody id="managersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALL USERS -->
+        <div data-tab-content="allusers" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">👥 All Users — تمام صارفین</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header" style="flex-wrap:wrap;gap:8px">
+              <input class="form-input" style="max-width:200px" id="usrSearch" placeholder="🔍 Search..." oninput="filterUsers()"/>
+              <select class="form-select" style="width:auto" id="roleFilter" onchange="filterUsers()">
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="landlord">Landlord</option>
+                <option value="manager">Manager</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Status</th><th>Created</th></tr></thead>
+                <tbody id="allUsersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOGS -->
+        <div data-tab-content="logs" class="hidden">
+          <div class="content-header">
+            <div><div class="content-title">📋 Activity Logs — سرگرمی لاگ</div></div>
+            <button class="btn btn-sm btn-outline" onclick="loadLogs()">🔄 Refresh</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Farm</th><th>Type</th><th>Cost</th><th>By</th></tr></thead>
+                <tbody id="logsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating dot menu (single shared) -->
+<div class="dot-menu" id="dotMenu"></div>
+
+<!-- Create Landlord Modal -->
+<div class="modal-overlay" id="createLandlordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👑 Create Landlord</div>
+      <button class="modal-close" onclick="closeModal('createLandlordModal')">✕</button>
+    </div>
+    <div id="llAlert" class="modal-alert error"></div>
+    <div class="form-group"><label class="form-label">👤 Full Name *</label><input class="form-input" id="ll_name" placeholder="Muhammad Ahmed"/></div>
+    <div class="input-grid-2">
+      <div class="form-group"><label class="form-label">📧 Email *</label><input class="form-input" type="email" id="ll_email" placeholder="ahmed@email.com"/></div>
+      <div class="form-group"><label class="form-label">📞 Phone</label><input class="form-input" id="ll_phone" placeholder="03001234567"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">🔑 Password *</label><input class="form-input" type="password" id="ll_pass" placeholder="Min 6 characters"/></div>
+    <button class="btn btn-primary btn-full" id="llBtn" onclick="createLandlord()">✅ Create Landlord</button>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit User</div>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div id="editAlert" class="modal-alert error"></div>
+    <input type="hidden" id="edit_uid"/>
+    <div class="form-group"><label class="form-label">👤 Name</label><input class="form-input" id="edit_name"/></div>
+    <div class="form-group"><label class="form-label">📞 Phone</label><input class="form-input" id="edit_phone"/></div>
+    <div class="form-group">
+      <label class="form-label">⚡ Status</label>
+      <select class="form-select" id="edit_status">
+        <option value="active">✅ Active</option>
+        <option value="suspended">🚫 Suspended</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveEdit()">💾 Save Changes</button>
+  </div>
+</div>
+
+<!-- View User Modal -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 User Details</div>
+      <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+    </div>
+    <div id="viewContent"></div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔑 Reset Password</div>
+      <button class="modal-close" onclick="closeModal('resetModal')">✕</button>
+    </div>
+    <div style="background:var(--warning-bg);color:var(--warning);padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;margin-bottom:16px">⚠️ A password reset link will be emailed to the user.</div>
+    <div style="font-size:14px;margin-bottom:20px">Send to: <strong id="resetEmail"></strong></div>
+    <div id="resetAlert" class="modal-alert"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-full" id="resetBtn" onclick="sendReset()">📧 Send Reset Email</button>
+      <button class="btn btn-outline" onclick="closeModal('resetModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🗑️ Delete User</div>
+      <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+    </div>
+    <div style="background:var(--danger-bg);color:var(--danger);padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;margin-bottom:16px">⚠️ This removes the user record. Cannot be undone!</div>
+    <div style="font-size:14px;margin-bottom:20px">Delete: <strong id="deleteName"></strong>?</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger btn-full" onclick="confirmDelete()">🗑️ Yes Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('deleteModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, runTransaction, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey:"AIzaSyDpTPibk-7_kqyJdfN94KrLlcKkoNnqIYE", authDomain:"farmledger-e85e3.firebaseapp.com", projectId:"farmledger-e85e3", storageBucket:"farmledger-e85e3.firebasestorage.app", messagingSenderId:"922324809308", appId:"1:922324809308:web:05c015ce12e55034e99899" });
+  const auth = getAuth(app), db = getFirestore(app);
+  try { await enableIndexedDbPersistence(db); } catch {}
+
+  let ME=null, allUsers=[], allLandlords=[], allManagers=[], allFarms=[], allActivities=[];
+  let activeUid='', activeEmail='';
+
+  // ── Toast ─────────────────────────────────────────────────────
+  function toast(msg, type='success') {
+    const c=document.getElementById('toast-container'), t=document.createElement('div');
+    t.className=`toast ${type}`;
+    t.innerHTML=`<span>${{success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'}[type]||'✅'}</span><span>${msg}</span>`;
+    c.appendChild(t); requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3500);
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────
+  window.openModal  = id => document.getElementById(id)?.classList.add('open');
+  window.closeModal = id => document.getElementById(id)?.classList.remove('open');
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+  // ── Dot Menu ──────────────────────────────────────────────────
+  const dotMenu = document.getElementById('dotMenu');
+  window.showDotMenu = function(btn, uid) {
+    const user = allUsers.find(u=>u.uid===uid);
+    if (!user) return;
+    const suspended = user.status==='suspended';
+    dotMenu.innerHTML = `
+      <button onclick="hideDotMenu();openView('${uid}')">👁️ View Details</button>
+      <button onclick="hideDotMenu();openEdit('${uid}')">✏️ Edit</button>
+      <button onclick="hideDotMenu();openResetPass('${user.email||''}','${uid}')">🔑 Reset Password</button>
+      <div class="menu-divider"></div>
+      <button onclick="hideDotMenu();doToggleSuspend('${uid}','${user.status||'active'}')">${suspended?'✅ Activate User':'🚫 Suspend User'}</button>
+      <div class="menu-divider"></div>
+      <button class="red" onclick="hideDotMenu();openDelete('${uid}','${user.name||''}')">🗑️ Delete User</button>`;
+    const rect = btn.getBoundingClientRect();
+    const menuW = 210;
+    let left = rect.right - menuW;
+    let top  = rect.bottom + 4;
+    if (left < 8) left = 8;
+    if (top + 280 > window.innerHeight) top = rect.top - 280;
+    dotMenu.style.left = left + 'px';
+    dotMenu.style.top  = top  + 'px';
+    dotMenu.classList.add('open');
+  };
+  window.hideDotMenu = () => dotMenu.classList.remove('open');
+  document.addEventListener('click', e => { if (!e.target.closest('.dot-wrap') && !e.target.closest('.dot-menu')) hideDotMenu(); });
+
+  // ── Online ────────────────────────────────────────────────────
+  function updateOnline(){const el=document.getElementById('onlineIndicator'),bn=document.getElementById('offlineBanner'),on=navigator.onLine;if(el){el.className=`online-indicator ${on?'online':'offline'}`;el.innerHTML=`<div class="online-dot"></div>${on?'Online':'Offline'}`;}if(bn)bn.classList.toggle('show',!on);}
+  window.addEventListener('online',()=>{updateOnline();toast('Back online!','success');});
+  window.addEventListener('offline',()=>{updateOnline();toast('Offline mode','warning');});
+  updateOnline();
+
+  // ── Sidebar & Tabs ────────────────────────────────────────────
+  const tog=document.getElementById('menuToggle'),sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay');
+  tog?.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('show');});
+  ov?.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('show');});
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.nav-item[data-tab]').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
+    document.querySelectorAll('[data-tab-content]').forEach(c=>c.classList.toggle('hidden',c.dataset.tabContent!==tab));
+    document.getElementById('pageBreadcrumb').textContent = tab.charAt(0).toUpperCase()+tab.slice(1);
+    sb.classList.remove('open'); ov.classList.remove('show');
+    if (tab==='logs') loadLogs();
+  };
+  document.querySelectorAll('.nav-item[data-tab]').forEach(i=>i.addEventListener('click',()=>switchTab(i.dataset.tab)));
+
+  // ── Auth ──────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href='../index.html'; return; }
+    try {
+      const snap = await getDoc(doc(db,'users',user.uid));
+      if (!snap.exists()||snap.data().role!=='admin') { window.location.href='../index.html'; return; }
+      ME = { uid:user.uid, ...snap.data() };
+      document.getElementById('sidebarName').textContent  = ME.name||'Admin';
+      document.getElementById('sidebarAvatar').textContent = (ME.name||'A').charAt(0).toUpperCase();
+      await loadAll();
+      document.getElementById('pageLoader').classList.add('hidden');
+      document.getElementById('appContent').classList.remove('hidden');
+    } catch(e) {
+      document.getElementById('pageLoader').innerHTML = `<div style="color:red;padding:20px;text-align:center">❌ ${e.message}</div>`;
+    }
+  });
+
+  // ── Load Data ─────────────────────────────────────────────────
+  async function loadAll() {
+    const [uSnap, fSnap, aSnap] = await Promise.all([
+      getDocs(collection(db,'users')),
+      getDocs(collectio
