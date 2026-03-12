@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FarmLedger — Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#1a5c1e"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-sidebar">
+    <div class="login-brand-icon">🌾</div>
+    <div class="login-brand-name">FarmLedger</div>
+    <div class="login-brand-tagline">Smart Farm Management System</div>
+    <div class="login-brand-urdu">فارم لیجر — زرعی نظم و نسق</div>
+    <div class="login-features">
+      <div class="login-feature">
+        <div class="login-feature-icon">📊</div>
+        <div><strong>Real-time Tracking</strong><span>Live expenses & harvest data</span></div>
+      </div>
+      <div class="login-feature">
+        <div class="login-feature-icon">📱</div>
+        <div><strong>Works Offline</strong><span>Use without internet, auto-sync</span></div>
+      </div>
+      <div class="login-feature">
+        <div class="login-feature-icon">🖨️</div>
+        <div><strong>Print Reports</strong><span>Professional farm reports</span></div>
+      </div>
+      <div class="login-feature">
+        <div class="login-feature-icon">📈</div>
+        <div><strong>Profit Analytics</strong><span>Charts & market prices</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="login-main">
+    <div class="login-form-wrap">
+      <div class="login-form-title">Welcome Back 👋</div>
+      <div class="login-form-sub">خوش آمدید — Sign in to your FarmLedger account</div>
+      <div id="loginAlert" class="modal-alert error" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">📧 Email Address</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">🔑 Password — پاس ورڈ</label>
+        <input class="form-input" type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" id="loginBtn" onclick="doLogin()">
+        Sign In — لاگ ان →
+      </button>
+      <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--muted)">
+        Don't have an account? Contact your Admin or Landlord.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="installBanner" class="install-banner">
+  <div class="install-banner-text">📱 Install FarmLedger on your phone for offline access!</div>
+  <div class="install-banner-actions">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4)" id="installBtn">Install</button>
+    <button class="btn-ghost btn-sm" style="color:rgba(255,255,255,0.7)" onclick="document.getElementById('installBanner').classList.remove('show')">✕</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey:"AIzaSyDpTPibk-7_kqyJdfN94KrLlcKkoNnqIYE", authDomain:"farmledger-e85e3.firebaseapp.com", projectId:"farmledger-e85e3", storageBucket:"farmledger-e85e3.firebasestorage.app", messagingSenderId:"922324809308", appId:"1:922324809308:web:05c015ce12e55034e99899" });
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Enable offline
+  try { await enableIndexedDbPersistence(db); } catch {}
+
+  // Register SW
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+  // PWA install
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPrompt = e;
+    document.getElementById('installBanner').classList.add('show');
+  });
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+
+  function redirect(role) {
+    const r = { admin:'pages/admin.html', landlord:'pages/landlord.html', manager:'pages/manager.html' };
+    window.location.href = r[role] || 'index.html';
+  }
+
+  onAuthStateChanged(auth, async u => {
+    if (!u) return;
+    const s = await getDoc(doc(db,'users',u.uid));
+    if (s.exists()) redirect(s.data().role);
+  });
+
+  window.doLogin = async function() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value.trim();
+    const btn   = document.getElementById('loginBtn');
+    const alert = document.getElementById('loginAlert');
+    alert.style.display = 'none';
+    if (!email||!pass) { alert.textContent='⚠️ Please enter email and password'; alert.style.display='block'; return; }
+    btn.textContent='⏳ Signing in...'; btn.disabled=true;
+    try {
+      const c = await signInWithEmailAndPassword(auth, email, pass);
+      const s = await getDoc(doc(db,'users',c.user.uid));
+      if (!s.exists()) { alert.textContent='❌ Account not configured. Contact admin.'; alert.style.display='block'; btn.textContent='Sign In →'; btn.disabled=false; return; }
+      redirect(s.data().role);
+    } catch(e) {
+      const m = { 'auth/invalid-credential':'Wrong email or password','auth/user-not-found':'No account found','auth/wrong-password':'Wrong password','auth/too-many-requests':'Too many attempts. Try later.' };
+      alert.textContent = '❌ ' + (m[e.code]||'Login failed. Check your details.');
+      alert.style.display = 'block';
+      btn.textContent='Sign In — لاگ ان →'; btn.disabled=false;
+    }
+  };
+  document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
+</script>
+</body>
+</html>

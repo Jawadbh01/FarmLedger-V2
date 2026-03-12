@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FarmLedger — Setup</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body style="background:var(--bg);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px">
+<div style="width:100%;max-width:460px">
+  <div style="text-align:center;margin-bottom:24px">
+    <div style="font-size:52px">🌾</div>
+    <div style="font-size:24px;font-weight:800;color:var(--primary);margin-top:8px">FarmLedger Setup</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">Create your Admin account — use once only!</div>
+  </div>
+  <div class="card">
+    <div style="background:var(--warning-bg);color:var(--warning);padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;margin-bottom:20px">⚠️ Use this page ONE TIME only. Do not share this URL.</div>
+    <div class="form-group"><label class="form-label">👤 Admin Name *</label><input class="form-input" id="s_name" placeholder="Your full name"/></div>
+    <div class="form-group"><label class="form-label">📧 Email *</label><input class="form-input" type="email" id="s_email" placeholder="admin@farmledger.com"/></div>
+    <div class="form-group"><label class="form-label">🔑 Password *</label><input class="form-input" type="password" id="s_pass" placeholder="Strong password (min 6 chars)"/></div>
+    <div id="setupAlert" class="modal-alert" style="display:none"></div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="doSetup()">🚀 Create Admin Account</button>
+    <div style="text-align:center;margin-top:16px"><a href="index.html" style="color:var(--muted);font-size:13px">← Back to Login</a></div>
+  </div>
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const app = initializeApp({ apiKey:"AIzaSyDpTPibk-7_kqyJdfN94KrLlcKkoNnqIYE", authDomain:"farmledger-e85e3.firebaseapp.com", projectId:"farmledger-e85e3", storageBucket:"farmledger-e85e3.firebasestorage.app", messagingSenderId:"922324809308", appId:"1:922324809308:web:05c015ce12e55034e99899" });
+  const auth = getAuth(app), db = getFirestore(app);
+  window.doSetup = async function() {
+    const name=document.getElementById('s_name').value.trim(), email=document.getElementById('s_email').value.trim(), pass=document.getElementById('s_pass').value.trim();
+    const al = document.getElementById('setupAlert');
+    al.style.display='none'; al.className='modal-alert';
+    if (!name||!email||!pass) { al.textContent='⚠️ All fields required'; al.className='modal-alert error show'; al.style.display='block'; return; }
+    try {
+      const chk = await getDoc(doc(db,'counters','admin_setup'));
+      if (chk.exists()) { al.textContent='❌ Admin already set up! Go to login page.'; al.className='modal-alert error show'; al.style.display='block'; return; }
+      const c = await createUserWithEmailAndPassword(auth, email, pass);
+      await setDoc(doc(db,'users',c.user.uid), { uid:c.user.uid, userId:'ADMIN-001', name, email, role:'admin', status:'active', setupComplete:true, createdAt:serverTimestamp() });
+      await setDoc(doc(db,'counters','admin_setup'), { done:true, createdAt:serverTimestamp() });
+      al.textContent='✅ Admin created successfully! Redirecting to login...'; al.className='modal-alert success show'; al.style.display='block';
+      setTimeout(()=>window.location.href='index.html', 2000);
+    } catch(e) {
+      al.textContent='❌ '+(e.code==='auth/email-already-in-use'?'Email already registered — go to login!':e.message);
+      al.className='modal-alert error show'; al.style.display='block';
+    }
+  };
+</script>
+</body>
+</html>
