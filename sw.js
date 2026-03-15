@@ -1,5 +1,6 @@
-// FarmLedger V2 - Service Worker
-const CACHE = 'farmledger-v2-cache';
+// FarmLedger Service Worker
+const CACHE = 'farmledger-v3-cache';
+
 const ASSETS = [
   '/FarmLedger-V2/index.html',
   '/FarmLedger-V2/css/style.css',
@@ -10,24 +11,38 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
   self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
+  );
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE) return caches.delete(key);
+        })
+      )
+    )
+  );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('firestore.googleapis.com') || e.request.url.includes('firebase')) return;
+
+  // Skip Firebase requests
+  if (e.request.url.includes('firebase')) return;
+
   e.respondWith(
-    fetch(e.request).then(r => {
-      if (r && r.status === 200) {
-        const clone = r.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
-      return r;
-    }).catch(() => caches.match(e.request))
+    fetch(e.request)
+      .then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
+
 });
