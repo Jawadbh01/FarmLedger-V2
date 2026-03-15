@@ -20,6 +20,9 @@
 
   --transition: all 0.25s ease;
 }
+body {
+  background: red;
+}
 
 /* -------------------------
    Reset / Base
