@@ -1,12 +1,14 @@
 // FarmLedger V2 - Service Worker
-const CACHE = 'farmledger-v2-cache';
+const CACHE = 'farmledger-v3-cache';
+
 const ASSETS = [
-'/FarmLedger-V2/index.html',
-'/FarmLedger-V2/css/style.css',
-'/FarmLedger-V2/pages/admin.html',
-'/FarmLedger-V2/pages/landlord.html',
-'/FarmLedger-V2/pages/manager.html',
-'/FarmLedger-V2/manifest.json'
+  '/',
+  '/index.html',
+  '/css/style.css',
+  '/pages/admin.html',
+  '/pages/landlord.html',
+  '/pages/manager.html',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', e => {
